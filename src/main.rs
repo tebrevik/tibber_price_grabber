@@ -44,8 +44,7 @@ fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Erro
     for hourly_info in data {
         let price = hourly_info.as_ref().expect("hourly").total.unwrap();
         let hour = &hourly_info.as_ref().expect("hourly").starts_at.as_ref().unwrap();
-        println!("{:?}", price);
-        println!("{:?}",hour);
+        println!("pris: {:?},-\tstarter {:?}", price,hour);
     }
 
     Ok(())
