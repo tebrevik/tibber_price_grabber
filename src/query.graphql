@@ -1,0 +1,14 @@
+query Query($id: ID!) {
+  viewer {
+    home(id: $id) {
+      currentSubscription{
+        priceInfo{
+          today {
+            total
+            startsAt
+          }
+        }
+      }
+    }
+  }
+}

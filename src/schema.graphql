@@ -1,0 +1,51 @@
+schema {
+    query: Query
+}
+scalar ID
+
+type Address {
+    address1: String
+    address2: String
+    address3: String
+    city: String
+    postalCode: String
+    country: String
+    latitude: String
+    longitude: String
+}
+
+type Home {
+    id: ID!
+    address: Address
+    currentSubscription: Subscription
+}
+
+type Subscription {
+    id: ID!
+    priceInfo: PriceInfo
+}
+
+type PriceInfo {
+    current: Price
+    today: [Price]!
+    tomorrow: [Price]!
+}
+
+type Price {
+    total: Float
+    startsAt: String
+}
+
+type Viewer {
+    login: String
+    userId: String
+    name: String
+    accountType: [String!]!
+    homes: [Home!]!
+    home: Home!
+    id: ID!
+}
+
+type Query {
+    viewer: Viewer
+}
