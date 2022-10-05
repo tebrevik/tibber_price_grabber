@@ -2,6 +2,8 @@ use anyhow::*;
 use ::reqwest::blocking::Client;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use std::env;
+use chrono::{Utc, DateTime, Timelike};
+use chrono_tz::Europe::Oslo;
 
 
 #[derive(GraphQLQuery)]
@@ -40,11 +42,15 @@ fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Erro
             .price_info
             .expect("missing QueryViewerHomeCurrentSubscriptionPriceInfo data")
             .today;
+    
+    let now = Utc::now();
 
     for hourly_info in data {
         let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
-        let hour = &hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap();
-        println!("pris: {:?},-\tstarter {:?}", price,hour);
+        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
+        if now.with_timezone(&Oslo).hour() <= hour.hour() {
+            println!("pris: {:?},-\tstarter {:?}", price,hour);
+        }
     }
 
     Ok(())
