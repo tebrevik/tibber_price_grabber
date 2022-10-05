@@ -31,19 +31,19 @@ fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Erro
     let response_body: graphql_client::Response<query::ResponseData> = post_graphql::<Query, _>(&client, "https://api.tibber.com/v1-beta/gql", variables).unwrap();
     let data = response_body
             .data
-            .expect("response data")
+            .expect("missing response data")
             .viewer
-            .expect("viewer")
+            .expect("missing QueryViewer data")
             .home
             .current_subscription
-            .expect("subsc")
+            .expect("missing QueryViewerHomeCurrentSubscription data")
             .price_info
-            .expect("price")
+            .expect("missing QueryViewerHomeCurrentSubscriptionPriceInfo data")
             .today;
 
     for hourly_info in data {
-        let price = hourly_info.as_ref().expect("hourly").total.unwrap();
-        let hour = &hourly_info.as_ref().expect("hourly").starts_at.as_ref().unwrap();
+        let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
+        let hour = &hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap();
         println!("pris: {:?},-\tstarter {:?}", price,hour);
     }
 
