@@ -1,9 +1,13 @@
 use anyhow::*;
+use query::QueryViewerHomeCurrentSubscriptionPriceInfoToday;
 use ::reqwest::blocking::Client;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use std::env;
 use chrono::{Utc, DateTime, Timelike};
 use chrono_tz::Europe::Oslo;
+
+use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
+use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
 
 
 #[derive(GraphQLQuery)]
@@ -13,6 +17,51 @@ use chrono_tz::Europe::Oslo;
     response_derives = "Debug"
 )]
 struct Query;
+
+fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>) {
+    let today: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoToday>> = data.as_ref().expect("today").today.as_ref();
+    let tomorrow: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow>> = data.as_ref().expect("tomorrow").tomorrow.as_ref();
+    let now = Utc::now();
+    let mut avg: f64=0.0;
+    let mut max: f64=0.0;
+    let mut min: f64=200.0;
+    let mut length = today.len() as f64;
+    for hourly_info in today {
+        let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
+        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
+
+        avg += price/length;
+        if price < min {
+            min = price;
+        }
+        if price > max {
+            max = price;
+        }
+        if now.with_timezone(&Oslo).hour() <= hour.hour() {
+            println!("pris: {:?},-\tstarter {:?}", price,hour);
+        }
+    }
+    println!("avg {:?}, max {:?}, min {:?}",avg, max, min);
+
+    avg = 0.0;
+    min = 200.0;
+    max = 0.0;
+    length = tomorrow.len() as f64;
+    for hourly_info in tomorrow {
+        let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
+        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
+
+        avg += price/length;
+        if price < min {
+            min = price;
+        }
+        if price > max {
+            max = price;
+        }
+        println!("pris: {:?},-\tstarter {:?}", price,hour);
+    }
+    println!("avg {:?}, max {:?}, min {:?}",avg, max, min);
+}
 
 fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Error> {
     let variables = query::Variables {
@@ -39,19 +88,8 @@ fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Erro
             .home
             .current_subscription
             .expect("missing QueryViewerHomeCurrentSubscription data")
-            .price_info
-            .expect("missing QueryViewerHomeCurrentSubscriptionPriceInfo data")
-            .today;
-    
-    let now = Utc::now();
-
-    for hourly_info in data {
-        let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
-        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
-        if now.with_timezone(&Oslo).hour() <= hour.hour() {
-            println!("pris: {:?},-\tstarter {:?}", price,hour);
-        }
-    }
+            .price_info;
+    get_avg_max_and_min(data);
 
     Ok(())
 }
