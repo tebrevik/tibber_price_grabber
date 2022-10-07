@@ -41,7 +41,7 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
             println!("pris: {:?},-\tstarter {:?}", price,hour);
         }
     }
-    println!("avg {:?}, max {:?}, min {:?}",avg, max, min);
+    println!("Dagens avg {:?}, max {:?}, min {:?}",avg, max, min);
 
     avg = 0.0;
     min = 200.0;
@@ -60,7 +60,9 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
         }
         println!("pris: {:?},-\tstarter {:?}", price,hour);
     }
-    println!("avg {:?}, max {:?}, min {:?}",avg, max, min);
+    if length > 0.0 {
+        println!("Morgendagens avg {:?}, max {:?}, min {:?}",avg, max, min);
+    } 
 }
 
 fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Error> {
