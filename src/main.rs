@@ -9,6 +9,9 @@ use chrono_tz::Europe::Oslo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
 
+mod terminal_output;
+mod tibber;
+use crate::tibber::tibber::TibberPrice;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -26,6 +29,9 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
     let mut max: f64=0.0;
     let mut min: f64=200.0;
     let mut length = today.len() as f64;
+
+    let mut prices: Vec<TibberPrice> = Vec::new();
+
     for hourly_info in today {
         let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
         let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
@@ -38,10 +44,11 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
             max = price;
         }
         if now.with_timezone(&Oslo).hour() <= hour.hour() {
-            println!("pris: {:?},-\tstarter {:?}", price,hour);
+            prices.push(TibberPrice{ timestamp: hour, price: price});
         }
     }
-    println!("Dagens avg {:?}, max {:?}, min {:?}",avg, max, min);
+
+    println!("Dagens\t\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
 
     avg = 0.0;
     min = 200.0;
@@ -58,11 +65,12 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
         if price > max {
             max = price;
         }
-        println!("pris: {:?},-\tstarter {:?}", price,hour);
+        prices.push(TibberPrice{ timestamp: hour, price: price});
     }
     if length > 0.0 {
-        println!("Morgendagens avg {:?}, max {:?}, min {:?}",avg, max, min);
+        println!("Morgendagens\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
     } 
+    terminal_output::terminal_output::to_output(prices);
 }
 
 fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Error> {
