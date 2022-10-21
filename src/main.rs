@@ -10,6 +10,7 @@ use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
 
 mod terminal_output;
+mod prioritized_output;
 mod tibber;
 use crate::tibber::tibber::TibberPrice;
 
@@ -23,7 +24,6 @@ struct Query;
 
 fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>) {
     let today: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoToday>> = data.as_ref().expect("today").today.as_ref();
-    let tomorrow: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow>> = data.as_ref().expect("tomorrow").tomorrow.as_ref();
     let now = Utc::now();
     let mut avg: f64=0.0;
     let mut max: f64=0.0;
@@ -50,6 +50,7 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
 
     println!("Dagens\t\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
 
+    let tomorrow: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow>> = data.as_ref().expect("tomorrow").tomorrow.as_ref();
     avg = 0.0;
     min = 200.0;
     max = 0.0;
@@ -70,7 +71,8 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
     if length > 0.0 {
         println!("Morgendagens\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
     } 
-    terminal_output::terminal_output::to_output(prices);
+    terminal_output::terminal_output::to_output(&prices);
+    prioritized_output::prioritized_output::to_output(&prices);
 }
 
 fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Error> {
