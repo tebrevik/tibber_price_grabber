@@ -3,8 +3,7 @@ use query::QueryViewerHomeCurrentSubscriptionPriceInfoToday;
 use ::reqwest::blocking::Client;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use std::env;
-use chrono::{Utc, DateTime, Timelike};
-use chrono_tz::Europe::Oslo;
+use chrono::DateTime;
 
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
@@ -25,7 +24,6 @@ struct Query;
 
 fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>) -> Result<(), anyhow::Error> {
     let today: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoToday>> = data.as_ref().expect("today").today.as_ref();
-    let now = Utc::now();
     let mut avg: f64=0.0;
     let mut max: f64=0.0;
     let mut min: f64=200.0;
@@ -44,9 +42,7 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
         if price > max {
             max = price;
         }
-        if now.with_timezone(&Oslo).hour() <= hour.hour() {
-            prices.push(TibberPrice{ timestamp: hour, price: price});
-        }
+        prices.push(TibberPrice{ timestamp: hour, price: price});
     }
 
     println!("Dagens\t\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
@@ -72,8 +68,8 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
     if length > 0.0 {
         println!("Morgendagens\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
     } 
-    terminal_output::terminal_output::to_output(prices.as_ref());
-    prioritized_output::prioritized_output::to_output(prices.as_ref());
+    terminal_output::terminal_output::to_output(prices.as_ref())?;
+    prioritized_output::prioritized_output::to_output(prices.as_ref())?;
     cloudevent_output::cloudevent_output::to_output(prices.as_ref())?;
 
     Ok(())

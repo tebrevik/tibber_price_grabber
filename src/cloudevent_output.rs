@@ -1,5 +1,5 @@
 pub mod cloudevent_output {
-    use cloudevents::binding::nats::{MessageExt, NatsCloudEvent};
+    //use cloudevents::binding::nats::{MessageExt, NatsCloudEvent};
     use cloudevents::{EventBuilder, EventBuilderV10};
     use chrono::Utc;
     use uuid::Uuid;
@@ -14,9 +14,11 @@ pub mod cloudevent_output {
             .data("application/json", json!(prices) )
             .build()?;
 
-        let n_msg = NatsCloudEvent::from_event(event);
+        println!("{:?}",event);
+
+        //let n_msg = NatsCloudEvent::from_event(event);
         
-        println!("{:?}",n_msg);
+        //println!("{:?}",n_msg);
 
         Ok(())
     }
