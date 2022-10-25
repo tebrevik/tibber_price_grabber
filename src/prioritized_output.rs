@@ -1,14 +1,34 @@
 pub mod prioritized_output {
+    pub struct PrioritizedOutput {
+        periode_hours: u8,
+        nr_elements: u8,
+    }
 
-    pub fn to_output(prices: &Vec<crate::tibber::tibber::TibberPrice>) -> Result<(), anyhow::Error> {
-        let mut p = prices.clone();
-        p.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
-        println!("***Prioritized start***");
-        for i in p {
-            println!("hour: {:?}, price: {:?}", i.timestamp, i.price);
+    impl PrioritizedOutput {
+        pub fn new(hours: u8, elements: u8) -> PrioritizedOutput {
+            PrioritizedOutput { periode_hours: hours, nr_elements: elements }
         }
-        println!("***Prioritized end***");
 
-        Ok(())
+        pub fn to_output(&self, prices: &Vec<crate::tibber::tibber::TibberPrice>) -> Result<(), anyhow::Error> {
+            let p = prices.clone();
+            let mut a = p.chunks(self.periode_hours as usize).clone();
+            println!("***Prioritized start - periode {:?}", self.periode_hours);
+            loop {
+                let b = a.next();
+                if b.is_none() {
+                    break;
+                }
+                let mut c: Vec<crate::tibber::tibber::TibberPrice> = b.unwrap().to_vec();
+                c.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
+                c = c[0..self.nr_elements as usize].to_vec();
+                for i in c {
+                    println!("hour: {:?}, price: {:?}", i.timestamp, i.price);    
+                }
+                println!("---")
+            }
+            println!("***Prioritized end***");
+
+            Ok(())
+        }
     }
 }
