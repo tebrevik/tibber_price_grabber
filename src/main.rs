@@ -7,6 +7,7 @@ use chrono::DateTime;
 
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
+use crate::prioritized_output::prioritized_output::PrioritizedOutput;
 
 mod terminal_output;
 mod prioritized_output;
@@ -68,8 +69,9 @@ fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>
     if length > 0.0 {
         println!("Morgendagens\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
     } 
+    let po = PrioritizedOutput::new(9,2);
     terminal_output::terminal_output::to_output(prices.as_ref())?;
-    prioritized_output::prioritized_output::to_output(prices.as_ref())?;
+    po.to_output(prices.as_ref())?;
     cloudevent_output::cloudevent_output::to_output(prices.as_ref())?;
 
     Ok(())
