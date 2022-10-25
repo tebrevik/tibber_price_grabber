@@ -7,7 +7,7 @@ pub mod terminal_output {
         let now = Utc::now();
 
         for i in prices {
-            if now.with_timezone(&Oslo).hour() <= i.timestamp.hour() {
+            if now.with_timezone(&Oslo).date_naive() < i.timestamp.date_naive() || now.with_timezone(&Oslo).hour() <= i.timestamp.hour() {
                 println!("hour: {:?}, price: {:?}", i.timestamp, i.price);
             }
         }
