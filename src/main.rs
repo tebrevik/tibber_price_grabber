@@ -1,9 +1,11 @@
 use anyhow::*;
+use chrono::FixedOffset;
 use query::QueryViewerHomeCurrentSubscriptionPriceInfoToday;
 use ::reqwest::blocking::Client;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use std::env;
 use chrono::DateTime;
+use clap::Parser;
 
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
 use crate::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
@@ -14,6 +16,7 @@ mod prioritized_output;
 mod cloudevent_output;
 mod tibber;
 use crate::tibber::tibber::TibberPrice;
+use crate::tibber::tibber::TibberAttributes;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -23,61 +26,69 @@ use crate::tibber::tibber::TibberPrice;
 )]
 struct Query;
 
-fn get_avg_max_and_min(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>) -> Result<(), anyhow::Error> {
+
+fn get_avg_max_and_min(prices: &Vec<TibberPrice>) -> Result<Vec<TibberAttributes>, anyhow::Error> {
+    let mut attr: Vec<TibberAttributes> = Vec::new();
+    let mut avg = 0.0;
+    let mut min = 255.0;
+    let mut max = 0.0;
+    let mut current_date: Option<DateTime<FixedOffset>> = None;
+    let mut nr_samples: u8 = 0;
+    for i in prices {
+        if current_date.is_none() {
+            current_date = Some(i.timestamp);
+            avg = i.price;
+            max = i.price;
+            min = i.price;
+            nr_samples = 1;
+        }
+        else {
+            if current_date.unwrap().date_naive() != i.timestamp.date_naive() {
+                avg /= nr_samples as f64;
+                attr.push(TibberAttributes{date: current_date.unwrap().date_naive(), avg: avg, max:max, min:min});
+                current_date = Some(i.timestamp);
+                avg = i.price;
+                max = i.price;
+                min = i.price;
+                nr_samples = 1;
+            }
+            else {
+                avg += i.price;
+                if max < i.price { max = i.price;}
+                if min > i.price { min = i.price;}
+                nr_samples += 1;
+            }
+        }
+    }
+    avg /= nr_samples as f64;
+    attr.push(TibberAttributes{date: current_date.unwrap().date_naive(), avg: avg, max:max, min:min});
+Ok(attr)
+}
+
+fn to_tibber_vec(data :Option<QueryViewerHomeCurrentSubscriptionPriceInfo>) -> Result<Vec<TibberPrice>, anyhow::Error> {
     let today: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoToday>> = data.as_ref().expect("today").today.as_ref();
-    let mut avg: f64=0.0;
-    let mut max: f64=0.0;
-    let mut min: f64=200.0;
-    let mut length = today.len() as f64;
 
     let mut prices: Vec<TibberPrice> = Vec::new();
 
     for hourly_info in today {
         let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
-        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
+        let ts = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
 
-        avg += price/length;
-        if price < min {
-            min = price;
-        }
-        if price > max {
-            max = price;
-        }
-        prices.push(TibberPrice{ timestamp: hour, price: price});
+        prices.push(TibberPrice{ timestamp: ts, price: price});
     }
-
-    println!("Dagens\t\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
 
     let tomorrow: &Vec<Option<QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow>> = data.as_ref().expect("tomorrow").tomorrow.as_ref();
-    avg = 0.0;
-    min = 200.0;
-    max = 0.0;
-    length = tomorrow.len() as f64;
     for hourly_info in tomorrow {
         let price = hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").total.unwrap();
-        let hour = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
+        let ts = DateTime::parse_from_rfc3339(&hourly_info.as_ref().expect("missing QueryViewerHomeCurrentSubscriptionPriceInfoToday data").starts_at.as_ref().unwrap()).expect("no datetime");
 
-        avg += price/length;
-        if price < min {
-            min = price;
-        }
-        if price > max {
-            max = price;
-        }
-        prices.push(TibberPrice{ timestamp: hour, price: price});
+        prices.push(TibberPrice{ timestamp: ts, price: price});
     }
-    if length > 0.0 {
-        println!("Morgendagens\tavg {:.3}\tmax {:.3}\tmin {:.3}",avg, max, min);
-    } 
-    let po = PrioritizedOutput::new(9,2);
-    terminal_output::terminal_output::to_output(prices.as_ref())?;
-    po.to_output(prices.as_ref())?;
-    cloudevent_output::cloudevent_output::to_output(prices.as_ref())?;
 
-    Ok(())
+    return Ok(prices)
 }
 
-fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Error> {
+fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<Vec<TibberPrice>, anyhow::Error> {
     let variables = query::Variables {
         id: home_id.to_string(),
     };
@@ -103,17 +114,41 @@ fn get_today_prices(tibber_token: &str, home_id:&str) -> Result<(), anyhow::Erro
             .current_subscription
             .expect("missing QueryViewerHomeCurrentSubscription data")
             .price_info;
-    get_avg_max_and_min(data)?;
-
-    Ok(())
+    to_tibber_vec(data)
 }
 
-
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    mode: String,
+}
 
 fn main() -> Result<(), anyhow::Error> {
     let token = env::var("TIBBER_TOKEN")?;
     let home_id = env::var("TIBBER_HOME_ID")?;
- 
-    get_today_prices(token.as_str(), home_id.as_str())?;
+
+    let args = Args::parse();
+    let res = get_today_prices(token.as_str(), home_id.as_str())?;
+
+    match args.mode.as_str() {
+        "List" => {
+            terminal_output::terminal_output::to_output(res.as_ref())?;
+            let attr = get_avg_max_and_min(res.as_ref())?;
+            for i in attr {
+                println!("{:?} - avg: {:.3}, max: {:.3}, min: {:.3}", i.date,i.avg,i.max, i.min);
+            }
+
+        }
+        "Priority" => {
+            let po = PrioritizedOutput::new(9,2);
+            po.to_output(res.as_ref())?;
+        }
+        "CloudEvents" => {
+            cloudevent_output::cloudevent_output::to_output(res.as_ref())?;
+        }
+        _ => {println!("no mode specified (List, Priority or CloudEvents)");}
+    }
+
     Ok(())
 }

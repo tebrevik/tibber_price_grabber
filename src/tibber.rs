@@ -7,6 +7,13 @@ pub mod tibber {
         pub price: f64,
     }
 
+    pub struct TibberAttributes {
+        pub date: chrono::NaiveDate,
+        pub avg: f64,
+        pub max: f64,
+        pub min: f64,
+    }
+
     impl Clone for TibberPrice {
         fn clone(&self) -> Self {
             TibberPrice {
