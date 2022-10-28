@@ -12,7 +12,6 @@ pub mod prioritized_output {
         pub fn to_output(&self, prices: &Vec<crate::tibber::tibber::TibberPrice>) -> Result<(), anyhow::Error> {
             let p = prices.clone();
             let mut a = p.chunks(self.periode_hours as usize).clone();
-            println!("***Prioritized start - periode {:?}", self.periode_hours);
             loop {
                 let b = a.next();
                 if b.is_none() {
@@ -26,7 +25,6 @@ pub mod prioritized_output {
                 }
                 println!("---")
             }
-            println!("***Prioritized end***");
 
             Ok(())
         }
