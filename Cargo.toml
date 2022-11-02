@@ -1,5 +1,5 @@
 [package]
-name = "rust_pris_grabber"
+name = "tibber_price_grabber"
 version = "0.1.0"
 edition = "2021"
 
