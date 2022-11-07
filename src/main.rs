@@ -13,6 +13,12 @@ mod tibber;
 struct Args {
     #[arg(short, long)]
     mode: String,
+
+    #[arg(short,long, default_value_t = 9) ]
+    periode_hours: u8,
+
+    #[arg(short,long, default_value_t = 2) ]
+    number_of_elements_prioritized: u8,
 }
 
 
@@ -33,7 +39,7 @@ fn main() -> Result<(), anyhow::Error> {
 
         }
         "Priority" => {
-            let po = PrioritizedOutput::new(9,2);
+            let po = PrioritizedOutput::new(args.periode_hours,args.number_of_elements_prioritized);
             po.to_output(res.as_ref())?;
         }
         "CloudEvents" => {
