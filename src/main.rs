@@ -1,7 +1,7 @@
 use std::env;
 use clap::Parser;
 use crate::prioritized_output::prioritized_output::PrioritizedOutput;
-
+use crate::cloudevent_output::cloudevent_output::CloudEventsNats;
 
 mod terminal_output;
 mod prioritized_output;
@@ -19,6 +19,12 @@ struct Args {
 
     #[arg(short,long, default_value_t = 2) ]
     number_of_elements_prioritized: u8,
+
+    #[arg(long, default_value_t = String::from("localhost:4222"))]
+    server_nats: String,
+
+    #[arg(long, default_value_t = String::from("tibber_prices"))]
+    subject_nats: String,
 }
 
 
@@ -43,7 +49,8 @@ fn main() -> Result<(), anyhow::Error> {
             po.to_output(res.as_ref())?;
         }
         "CloudEvents" => {
-            cloudevent_output::cloudevent_output::to_output(res.as_ref())?;
+            let cen = CloudEventsNats::new(args.server_nats,args.subject_nats);
+            cen.to_output(res.as_ref())?;
         }
         _ => {println!("no mode specified (List, Priority or CloudEvents)");}
     }
