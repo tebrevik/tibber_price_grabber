@@ -29,15 +29,16 @@ struct Args {
 
 
 fn main() -> Result<(), anyhow::Error> {
-    let token = env::var("TIBBER_TOKEN")?;
-    let home_id = env::var("TIBBER_HOME_ID")?;
-
     let args = Args::parse();
-    let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
+
+    let token = env::var("TIBBER_TOKEN")?;
+
 
     match args.mode.as_str() {
         "List" => {
-            terminal_output::terminal_output::to_output(res.as_ref())?;
+            let home_id = env::var("TIBBER_HOME_ID")?;
+            let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
+                    terminal_output::terminal_output::to_output(res.as_ref())?;
             let attr = crate::tibber::tibber::get_avg_max_and_min(res.as_ref())?;
             for i in attr {
                 println!("{:?} - avg: {:.3}, max: {:.3}, min: {:.3}", i.date,i.avg,i.max, i.min);
@@ -45,15 +46,30 @@ fn main() -> Result<(), anyhow::Error> {
 
         }
         "Priority" => {
-            let po = PrioritizedOutput::new(args.periode_hours,args.number_of_elements_prioritized);
+            let home_id = env::var("TIBBER_HOME_ID")?;
+            let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
+                    let po = PrioritizedOutput::new(args.periode_hours,args.number_of_elements_prioritized);
             po.to_output(res.as_ref())?;
         }
         "CloudEvents" => {
-            let cen = CloudEventsNats::new(args.server_nats,args.subject_nats);
+            let home_id = env::var("TIBBER_HOME_ID")?;
+            let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
+                    let cen = CloudEventsNats::new(args.server_nats,args.subject_nats);
             cen.to_output(res.as_ref())?;
+        }
+        "ListHomes" => {
+            let res = crate::tibber::tibber::get_homes(token.as_str());
+            for home in res.unwrap() {
+                let addr = home.address.unwrap_or(String::from("unknown"));
+                let postal_code = home.postal_code.unwrap_or(String::from(""));
+                let city = home.city.unwrap_or(String::from(""));
+                let country = home.country.unwrap_or(String::from(""));
+                println!("ID: {:?}, Address: {:?}, postal code: {:?}, city: {:?}, country: {:?}", home.id, addr, postal_code, city, country);
+            }
         }
         _ => {println!("no mode specified (List, Priority or CloudEvents)");}
     }
+
 
     Ok(())
 }

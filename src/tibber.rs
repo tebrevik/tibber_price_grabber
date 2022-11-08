@@ -13,6 +13,14 @@ pub mod tibber {
     )]
     struct Query;
 
+    #[derive(GraphQLQuery)]
+    #[graphql(
+        schema_path = "src/schema.graphql",
+        query_path = "src/get_home_id_query.graphql",
+        response_derives = "Debug"
+    )]
+    struct HomeQuery;
+
     use crate::tibber::tibber::query::QueryViewerHomeCurrentSubscriptionPriceInfo;
     use crate::tibber::tibber::query::QueryViewerHomeCurrentSubscriptionPriceInfoTomorrow;
     use serde::ser::{Serialize, Serializer, SerializeStruct};
@@ -27,6 +35,14 @@ pub mod tibber {
         pub avg: f64,
         pub max: f64,
         pub min: f64,
+    }
+
+    pub struct TibberHome {
+        pub id: String,
+        pub address: Option<String>,
+        pub postal_code: Option<String>,
+        pub city: Option<String>,
+        pub country: Option<String>,
     }
 
     impl Clone for TibberPrice {
@@ -138,6 +154,55 @@ pub mod tibber {
                 .expect("missing QueryViewerHomeCurrentSubscription data")
                 .price_info;
         to_tibber_vec(data)
+    }
+
+    pub fn get_homes(tibber_token: &str) -> Result<Vec<TibberHome>, anyhow::Error> {
+        let variables = home_query::Variables {
+            
+        };
+
+        let client = Client::builder()
+            .user_agent("graphql-rust/0.10.0")
+            .default_headers(
+                std::iter::once((
+                    reqwest::header::AUTHORIZATION,
+                    reqwest::header::HeaderValue::from_str(&format!("Bearer {}", tibber_token))
+                        .unwrap(),
+                ))
+                .collect(),
+                )
+            .build()?;
+        
+        let response_body: graphql_client::Response<home_query::ResponseData> = post_graphql::<HomeQuery, _>(&client, "https://api.tibber.com/v1-beta/gql", variables).unwrap();
+        let data = response_body
+                .data
+                .expect("missing response data")
+                .viewer
+                .expect("missing QueryViewer data")
+                .homes;
+
+        let mut homes: Vec<TibberHome> = Vec::new();
+        
+        for f in data {
+            let addr_struct = f.address.as_ref().expect("missing address");
+            let mut addr_line = addr_struct.address1.clone().unwrap_or(String::from(""));
+            if addr_struct.address2.is_some() {
+                addr_line.push(',');
+                addr_line.push_str(&addr_struct.address2.clone().unwrap());
+            }
+            if addr_struct.address3.is_some() {
+                addr_line.push(',');
+                addr_line.push_str(&addr_struct.address3.clone().unwrap());
+            }
+            homes.push(TibberHome {
+                id: f.id,
+                address: Some(addr_line),
+                postal_code: addr_struct.postal_code.clone(),
+                city: addr_struct.city.clone(),
+                country: addr_struct.country.clone()
+            })
+        }
+        Ok(homes)
     }
     
 }

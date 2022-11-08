@@ -8,8 +8,15 @@ tibber_price_grabber is a small project that pulls prices from the Tibber API an
 
 ## Usage
 
-Find your API Access token at developer.tibber.com, and your home id using the API explorer at developer.tibber.com.
+Find your API Access token at developer.tibber.com.
 
+
+### To find home id's
+```
+$ TIBBER_TOKEN=$TOKEN ./tibber_price_grabber --mode ListHomes
+```
+
+### To print list of hourly prices
 ```
 $ TIBBER_TOKEN=$TOKEN TIBBER_HOME_ID=$HOME_ID ./tibber_price_grabber --mode List 
 hour: 2022-11-02T17:00:00+01:00, price: 1.7822
@@ -47,8 +54,9 @@ hour: 2022-11-03T23:00:00+01:00, price: 1.0851
 2022-11-03 - avg: 1.091, max: 1.493, min: 0.509
 ```
 
+### To print prioritized hours
 ```
-$ TIBBER_TOKEN=$TOKEN TIBBER_HOME_ID=$HOME_ID ./tibber_price_grabber --mode Priority
+$ TIBBER_TOKEN=$TOKEN TIBBER_HOME_ID=$HOME_ID ./tibber_price_grabber --mode Priority --periode-hours 9 --number-of-elements-prioritized 2
 hour: 2022-11-02T03:00:00+01:00, price: 0.2099
 hour: 2022-11-02T02:00:00+01:00, price: 0.2383
 ---
@@ -69,6 +77,7 @@ hour: 2022-11-03T21:00:00+01:00, price: 1.1914
 ---
 ```
 
+### To publish prices to Nats using CloudEvents
 ```
 $ TIBBER_TOKEN=$TOKEN TIBBER_HOME_ID=$HOME_ID ./tibber_price_grabber --mode CloudEvents --server-nats localhost:4222 --subject-nats foo
 published
