@@ -5,8 +5,6 @@ tibber_price_grabber is a small project that pulls prices from the Tibber API an
 * a list
 * a prioritizeed list of hours where the electricity is cheapest
 * CloudEvents to Nats for usage by other applications.
-* FUTURE: Nats Jetstream
-
 
 ## Usage
 
