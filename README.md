@@ -4,7 +4,8 @@
 tibber_price_grabber is a small project that pulls prices from the Tibber API and display the prices to the terminal either as:
 * a list
 * a prioritizeed list of hours where the electricity is cheapest
-* Future: cloudevents to Nats Jetstream for usage by other applications.
+* CloudEvents to Nats for usage by other applications.
+* FUTURE: Nats Jetstream
 
 
 ## Usage
@@ -69,3 +70,9 @@ hour: 2022-11-03T23:00:00+01:00, price: 1.0851
 hour: 2022-11-03T21:00:00+01:00, price: 1.1914
 ---
 ```
+
+```
+$ TIBBER_TOKEN=$TOKEN TIBBER_HOME_ID=$HOME_ID ./tibber_price_grabber --mode CloudEvents --server-nats localhost:4222 --subject-nats foo
+published
+```
+
