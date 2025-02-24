@@ -12,9 +12,11 @@ serde = "^1.0"
 reqwest = { version = "^0.11", features = ["json", "blocking"]}
 chrono = "^0.4.22"
 chrono-tz = "^0.6.3"
-cloudevents-sdk = {git = "https://github.com/cloudevents/sdk-rust", features = ["nats"] }
-#cloudevents-sdk = {version = "^0.5.0"}
+cloudevents-sdk = { git = "https://github.com/tebrevik/sdk-rust", features = ["nats"] }
 uuid = { version = "^1.2.1", features = ["v4"] }
 serde_json = "^1.0.86"
+serde_bytes = "0.11"
 clap = { version = "^4.0.18", features = ["derive"] }
-nats = "^0.25.0"
+async-nats = "^0.39.0"
+tokio = { version = "1.43.0", features = ["full"] }
+
