@@ -13,7 +13,7 @@ reqwest = { version = "^0.11", features = ["json", "blocking"]}
 chrono = "^0.4.22"
 chrono-tz = "^0.6.3"
 cloudevents-sdk = { git = "https://github.com/tebrevik/sdk-rust", features = ["nats"] }
-uuid = { version = "^1.2.1", features = ["v4"] }
+uuid = { version = "^1.14.0", features = ["v4"] }
 serde_json = "^1.0.86"
 serde_bytes = "0.11.15"
 clap = { version = "^4.0.18", features = ["derive"] }
