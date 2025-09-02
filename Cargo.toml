@@ -16,7 +16,7 @@ cloudevents-sdk = { git = "https://github.com/tebrevik/sdk-rust", features = ["n
 uuid = { version = "^1.18.1", features = ["v4"] }
 serde_json = "^1.0.143"
 serde_bytes = "0.11.17"
-clap = { version = "^4.5.46", features = ["derive"] }
+clap = { version = "^4.5.47", features = ["derive"] }
 async-nats = "^0.42.0"
 tokio = { version = "1.47.1", features = ["full"] }
 
