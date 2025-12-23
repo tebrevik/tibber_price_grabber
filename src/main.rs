@@ -32,13 +32,13 @@ fn main() -> Result<(), anyhow::Error> {
     let args = Args::parse();
 
     let token = env::var("TIBBER_TOKEN")?;
-
+    
 
     match args.mode.as_str() {
         "List" => {
             let home_id = env::var("TIBBER_HOME_ID")?;
             let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
-                    terminal_output::terminal_output::to_output(res.as_ref())?;
+            terminal_output::terminal_output::to_output(res.as_ref())?;
             let attr = crate::tibber::tibber::get_avg_max_and_min(res.as_ref())?;
             for i in attr {
                 println!("{:?} - avg: {:.3}, max: {:.3}, min: {:.3}", i.date,i.avg,i.max, i.min);
@@ -48,13 +48,14 @@ fn main() -> Result<(), anyhow::Error> {
         "Priority" => {
             let home_id = env::var("TIBBER_HOME_ID")?;
             let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
-                    let po = PrioritizedOutput::new(args.periode_hours,args.number_of_elements_prioritized);
+            let po = PrioritizedOutput::new(args.periode_hours,args.number_of_elements_prioritized);
             po.to_output(res.as_ref())?;
         }
         "CloudEvents" => {
             let home_id = env::var("TIBBER_HOME_ID")?;
             let res = crate::tibber::tibber::get_today_prices(token.as_str(), home_id.as_str())?;
-                    let cen = CloudEventsNats::new(args.server_nats,args.subject_nats);
+            let cen = CloudEventsNats::new(args.server_nats,args.subject_nats);
+            
             cen.to_output(res.as_ref())?;
         }
         "ListHomes" => {
