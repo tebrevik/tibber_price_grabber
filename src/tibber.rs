@@ -131,7 +131,7 @@ pub mod tibber {
         let variables = query::Variables {
             id: home_id.to_string(),
         };
-        let client = Client::builder()
+        let client = reqwest::blocking::Client::builder()
             .user_agent("graphql-rust/0.10.0")
             .default_headers(
                 std::iter::once((
