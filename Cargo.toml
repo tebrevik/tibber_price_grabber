@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 graphql_client = { version = "^0.16.0", features = ["reqwest-blocking"] }
 serde = "^1.0.228"
 reqwest = { version = "^0.12", features = ["json", "blocking"]}
