@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.104"
 graphql_client = { version = "^0.16.0", features = ["reqwest-blocking"] }
-serde = "^1.0.228"
+serde = "^1.0.229"
 reqwest = { version = "^0.12", features = ["json", "blocking"]}
 chrono = "^0.4.45"
 chrono-tz = "^0.10.4"
